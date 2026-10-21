@@ -19,33 +19,60 @@ pytest -q          # run the tests
 | Tool | What it does here |
 |---|---|
 | **Git + GitHub** | Stores the code and its history. |
-| **pytest** | Automatic tests. They check the weather logic without needing the internet. |
-| **Docker** | Runs the tests (and builds the Linux app) in a clean container, so results are the same everywhere. |
+| **pytest** | Automatic unit tests that check the weather logic. |
+| **Docker** | A clean, throwaway Linux machine used to re-run the tests and to prove the Linux build recipe works. |
 | **GitHub Actions** | A robot that runs our steps on GitHub's computers whenever we push. This is our CI/CD. |
-| **PyInstaller** | Turns the Python app into one file you can double-click, with no Python install needed. |
+| **PyInstaller** | Packs the Python app into one file you can double-click, with no Python install needed. |
 | **GitHub Releases** | Stores the finished download files. |
 | **GitHub Pages** | Hosts the download website (`docs/index.html`). |
 
 ## How the pipeline works
-**1. Every push or pull request** runs `ci.yml`:
-- runs the tests on Linux and Windows
-- opens the app window on a fake screen to check it starts
-- builds the Docker image, which runs the tests again and builds the Linux app
+There are two workflows. One checks every change, the other publishes a version.
+
+### 1. Checking every push and pull request (`ci.yml`)
+**What is tested?** The Python source code, not the finished app. Python runs straight from source, so
+the tests never need a build. Building only wraps the same code into one file at the end. The tests are
+unit tests (`tests/test_api.py`, 8 of them): they feed the weather code fake network replies and check
+that it parses data, converts units and reports errors correctly. They never call the real internet.
+
+CI then runs these jobs:
+- **Unit tests on Linux and Windows.** The same code can behave differently on each system, so we test on both.
+- **GUI smoke test (Linux).** Opens the real app window on a fake screen for 1.5 seconds. Unit tests only
+  cover the data code, so this catches crashes in the window itself.
+- **Docker job.** This runs the same unit tests a second time, on purpose, inside a fresh container that
+  has only what `requirements.txt` and the `Dockerfile` install. If we forgot a dependency, it fails here
+  even though it works on our own laptops. The job then builds the Linux app inside the container. That
+  is what caught a missing Tk library that the normal jobs could not see. The Docker app is only a
+  check. It is not the file people download.
 
 If anything fails, the run turns red and we know before anyone downloads a broken app.
 
-**2. Pushing a version tag** (like `v0.1.1`) runs `release.yml`:
-- runs the tests first
-- builds the app 4 times at once, each on a matching computer: Windows and Linux, each for normal
-  PCs (x64) and ARM chips (arm64). An app only runs on the system it was built on, so all four are needed.
-- publishes the 4 files, plus a checksum for each, to GitHub Releases
+### 2. Publishing a version (`release.yml`)
+Starts when we push a tag like `v0.1.1`.
+1. **Tests run first.** A tag push does not wait for CI, so the release re-checks the code itself.
+2. **Four builds run at the same time, on GitHub's computers (not in Docker, not on our laptops).**
+   Each one runs the same PyInstaller command. PyInstaller cannot build for another system: it packs the
+   Python and libraries of the machine it runs on. So each target needs its own matching machine
+   (a GitHub "runner"), not a different compiler:
 
-**3. The website** reads the newest release from GitHub, detects the visitor's system, and links to the
-right download. A new release shows up on the website by itself.
+   | Output | Runner machine |
+   |---|---|
+   | Linux, normal PC (x64) | `ubuntu-24.04` |
+   | Linux, ARM chip (arm64) | `ubuntu-24.04-arm` |
+   | Windows, normal PC (x64) | `windows-latest` |
+   | Windows, ARM chip (arm64) | `windows-11-arm` |
+3. **Publish.** The 4 files plus a checksum for each go to GitHub Releases.
+
+The finished apps are not opened automatically in CI. They are the same tested code, packed by a tool
+that has run on the real target system.
+
+### 3. The website
+It reads the newest release from GitHub, detects the visitor's system, and links to the right download.
+A new release shows up on the website by itself.
 
 ```
-push code  -> tests + Docker check (CI)
-push tag   -> tests -> 4 builds -> GitHub Release -> website shows it
+push code  -> unit tests (Linux, Windows) + GUI check + Docker check
+push tag   -> tests -> 4 builds on 4 machines -> GitHub Release -> website shows it
 ```
 
 ## How to make a release
@@ -60,8 +87,8 @@ Wait about 2 minutes, then check the Releases page and the website.
 |---|---|
 | `skyline/api.py` | Gets and parses weather data (no GUI, so it is easy to test) |
 | `skyline/ui.py` | The app window |
-| `tests/` | The automatic tests |
-| `Dockerfile` | Docker steps: `test` runs tests, `build` makes the Linux app |
+| `tests/` | The unit tests |
+| `Dockerfile` | `test` stage runs the tests, `build` stage makes the Linux app |
 | `.github/workflows/` | `ci.yml` and `release.yml`, the pipeline |
 | `docs/index.html` | The download website |
 | `report/` | The project report |
