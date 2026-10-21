@@ -14,6 +14,7 @@ pip install -r requirements-dev.txt
 python main.py     # run the app
 pytest -q          # run the tests
 ```
+On Linux the app needs Tk installed first (for example `sudo apt install python3-tk`).
 
 ## What we used, in simple words
 | Tool | What it does here |
@@ -86,15 +87,15 @@ push tag   -> tests -> 4 builds on 4 machines -> GitHub Release -> website shows
 git tag v0.1.1
 git push origin v0.1.1
 ```
-Wait about 2 minutes, then check the Releases page and the website.
+Wait 2 to 3 minutes, then check the Releases page and the website.
 
 ## Folders
 | Path | What is inside |
 |---|---|
 | `skyline/api.py` | Gets and parses weather data (no GUI, so it is easy to test) |
 | `skyline/ui.py` | The app window |
-| `tests/` | The unit tests |
-| `Dockerfile` | `test` stage runs the tests, `build` stage makes the Linux app |
+| `tests/` | The unit tests (`test_api.py`) and the GUI smoke test (`smoke_gui.py`) |
+| `Dockerfile` | `test` stage runs the unit tests and GUI smoke test, `build` stage makes the Linux app |
 | `.github/workflows/` | `ci.yml` and `release.yml`, the pipeline |
 | `docs/index.html` | The download website |
 | `report/` | The project report |
