@@ -5,8 +5,8 @@
 # Stage "artifact": exports only the executable.
 FROM python:3.12-slim AS base
 WORKDIR /app
-# libtk8.6: Tk runtime for the GUI; xvfb: virtual screen; binutils: needed by PyInstaller
-RUN apt-get update && apt-get install -y --no-install-recommends binutils libtk8.6 xvfb \
+# libtk8.6: Tk runtime for the GUI; xvfb, xauth: virtual screen; binutils: needed by PyInstaller
+RUN apt-get update && apt-get install -y --no-install-recommends binutils libtk8.6 xvfb xauth \
     && rm -rf /var/lib/apt/lists/*
 COPY requirements-dev.txt requirements.txt ./
 RUN pip install --no-cache-dir -r requirements-dev.txt
