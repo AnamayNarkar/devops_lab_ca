@@ -77,6 +77,10 @@ push code  -> Linux tests in Docker + Windows tests + Docker build check
 push tag   -> tests -> 4 builds on 4 machines -> GitHub Release -> website shows it
 ```
 
+## Running the downloaded app
+- **Windows:** double-click the `.exe`. It is unsigned, so SmartScreen may warn: choose "More info", then "Run anyway".
+- **Linux:** downloads lose the executable flag, so run `chmod +x skyline-weather-linux-x64` once, then `./skyline-weather-linux-x64`.
+
 ## How to make a release
 ```bash
 git tag v0.1.1

@@ -61,6 +61,8 @@
   .dl .meta{font-size:.8rem;color:var(--ink-2)}
   .dl .go{margin-top:12px;font-weight:700;color:var(--accent)}
   .dl[aria-disabled=true]{opacity:.5;pointer-events:none}
+  .note{margin-top:24px;font-size:.92rem;color:var(--ink-2);max-width:70ch;line-height:1.7}
+  .note code{background:#eceaf8;padding:2px 6px;border-radius:6px;font-size:.82rem}
   .rel{margin-top:28px;font-size:.85rem;color:var(--ink-2)}
 
   /* ---------- pipeline ---------- */
@@ -114,6 +116,7 @@
     <h2>Download Skyline</h2>
     <p class="sub">One file, no installer. Pick the build that matches your computer.</p>
     <div class="grid" id="grid"></div>
+    <p class="note"><b>Linux:</b> after downloading, run <code class="mono">chmod +x skyline-weather-linux-*</code> then <code class="mono">./skyline-weather-linux-x64</code> (or the arm64 file). Downloads lose the executable flag, so your file manager will not open them until you do this.<br><b>Windows:</b> the app is unsigned, so SmartScreen may warn. Choose “More info”, then “Run anyway”.</p>
     <p class="rel mono" id="rel">Loading latest release…</p>
   </div>
 </section>
