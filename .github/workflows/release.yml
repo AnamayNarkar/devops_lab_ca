@@ -10,16 +10,27 @@ permissions:
   contents: write
 
 jobs:
-  test:
-    name: Test in Docker
+  test-linux-docker:
+    name: Test Linux (Docker)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker build --target test -t skyline-weather:test .
 
+  test-windows:
+    name: Test Windows (native)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
   build:
     name: Build ${{ matrix.target }}
-    needs: test
+    needs: [test-linux-docker, test-windows]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
