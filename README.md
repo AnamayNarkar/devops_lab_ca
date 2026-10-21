@@ -20,7 +20,7 @@ pytest -q          # run the tests
 |---|---|
 | **Git + GitHub** | Stores the code and its history. |
 | **pytest** | Automatic unit tests that check the weather logic. |
-| **Docker** | A clean, throwaway Linux machine used to re-run the tests and to prove the Linux build recipe works. |
+| **Docker** | A clean, throwaway Linux machine. All Linux testing runs inside it, and it also proves the Linux build recipe works. |
 | **GitHub Actions** | A robot that runs our steps on GitHub's computers whenever we push. This is our CI/CD. |
 | **PyInstaller** | Packs the Python app into one file you can double-click, with no Python install needed. |
 | **GitHub Releases** | Stores the finished download files. |
@@ -35,21 +35,23 @@ the tests never need a build. Building only wraps the same code into one file at
 unit tests (`tests/test_api.py`, 8 of them): they feed the weather code fake network replies and check
 that it parses data, converts units and reports errors correctly. They never call the real internet.
 
-CI then runs these jobs:
-- **Unit tests on Linux and Windows.** The same code can behave differently on each system, so we test on both.
-- **GUI smoke test (Linux).** Opens the real app window on a fake screen for 1.5 seconds. Unit tests only
-  cover the data code, so this catches crashes in the window itself.
-- **Docker job.** This runs the same unit tests a second time, on purpose, inside a fresh container that
-  has only what `requirements.txt` and the `Dockerfile` install. If we forgot a dependency, it fails here
-  even though it works on our own laptops. The job then builds the Linux app inside the container. That
-  is what caught a missing Tk library that the normal jobs could not see. The Docker app is only a
-  check. It is not the file people download.
+The code is tested on both operating systems we ship for, in two parallel jobs:
+- **Linux, inside Docker.** The `test` stage of the `Dockerfile` is a fresh Linux container. It runs the
+  unit tests and then a GUI smoke test (opens the real window for 1.5 seconds on a virtual screen, to
+  catch crashes the data tests cannot see). Because the container only has what `requirements.txt` and
+  the `Dockerfile` install, a forgotten dependency fails here even if it works on our laptops.
+- **Windows, directly on a Windows runner.** The same unit tests and GUI smoke test, without Docker.
+  GitHub's Windows machines cannot run Linux containers, and Windows containers are huge and have no
+  desktop, so Windows is tested natively instead.
+
+A third job builds the Linux app inside Docker (the `build` and `artifact` stages) to check that the
+Linux build recipe works. That app is only a check. It is not the file people download.
 
 If anything fails, the run turns red and we know before anyone downloads a broken app.
 
 ### 2. Publishing a version (`release.yml`)
 Starts when we push a tag like `v0.1.1`.
-1. **Tests run first.** A tag push does not wait for CI, so the release re-checks the code itself.
+1. **Tests run first** (Linux in Docker, Windows natively). A tag push does not wait for CI, so the release re-checks the code itself.
 2. **Four builds run at the same time, on GitHub's computers (not in Docker, not on our laptops).**
    Each one runs the same PyInstaller command. PyInstaller cannot build for another system: it packs the
    Python and libraries of the machine it runs on. So each target needs its own matching machine
@@ -71,7 +73,7 @@ It reads the newest release from GitHub, detects the visitor's system, and links
 A new release shows up on the website by itself.
 
 ```
-push code  -> unit tests (Linux, Windows) + GUI check + Docker check
+push code  -> Linux tests in Docker + Windows tests + Docker build check
 push tag   -> tests -> 4 builds on 4 machines -> GitHub Release -> website shows it
 ```
 
