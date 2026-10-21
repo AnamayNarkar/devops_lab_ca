@@ -1,18 +1,22 @@
 # syntax=docker/dockerfile:1
-# Stage "test": runs the unit tests in a clean, reproducible container.
-# Stage "build": produces the Linux executable with PyInstaller.
+# All automated testing happens in the "test" stage of this file.
+# Stage "test":     unit tests + headless GUI smoke test.
+# Stage "build":    builds the Linux executable with PyInstaller.
+# Stage "artifact": exports only the executable.
 FROM python:3.12-slim AS base
 WORKDIR /app
+# libtk8.6: Tk runtime for the GUI; xvfb: virtual screen; binutils: needed by PyInstaller
+RUN apt-get update && apt-get install -y --no-install-recommends binutils libtk8.6 xvfb \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements-dev.txt requirements.txt ./
 RUN pip install --no-cache-dir -r requirements-dev.txt
 COPY . .
 
 FROM base AS test
 RUN pytest -q
+RUN PYTHONPATH=. xvfb-run -a python tests/smoke_gui.py
 
 FROM base AS build
-RUN apt-get update && apt-get install -y --no-install-recommends binutils libtk8.6 \
-    && rm -rf /var/lib/apt/lists/*
 RUN python -c "import tkinter" \
     && pyinstaller --onefile --windowed --name skyline-weather \
     --collect-all customtkinter main.py
