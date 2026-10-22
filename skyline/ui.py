@@ -8,10 +8,10 @@ import customtkinter as ctk
 from . import __version__
 from .api import Weather, WeatherError, format_temp, describe, get_weather
 
-BG = "#0b1a14"
-CARD = "#12261d"
-CARD_2 = "#1a3528"
-ACCENT = "#34d399"
+BG = "#0b1426"
+CARD = "#121f38"
+CARD_2 = "#1a2f52"
+ACCENT = "#60a5fa"
 TEXT = "#eef1ff"
 MUTED = "#8a93b8"
 FONT = "Segoe UI"
@@ -45,7 +45,7 @@ class App(ctk.CTk):
         self.entry.bind("<Return>", lambda _e: self._search(self.entry.get()))
         ctk.CTkButton(
             bar, text="Go", width=56, height=44, corner_radius=22,
-            fg_color=ACCENT, hover_color="#10b981", font=ctk.CTkFont(FONT, 14, "bold"),
+            fg_color=ACCENT, hover_color="#3b82f6", font=ctk.CTkFont(FONT, 14, "bold"),
             command=lambda: self._search(self.entry.get()),
         ).grid(row=0, column=1, padx=(8, 0))
 
